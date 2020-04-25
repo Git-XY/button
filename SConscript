@@ -1,18 +1,17 @@
-Import('RTT_ROOT')
 Import('rtconfig')
 from building import *
 
 cwd     = GetCurrentDir()
 
-# add button src files.
-if GetDepend('PKG_USING_BUTTON'):
-    src += Glob('src/button.c')
-if GetDepend('PKG_USING_BUTTON_SAMPLE'):
-    src += Glob('samples/button_sample.c')
-# add button include path.
+# add key src files.
+if GetDepend('PKG_USING_KEY'):
+    src += Glob('src/key.c')
+if GetDepend('PKG_USING_KEY_SAMPLE'):
+    src += Glob('samples/key_sample.c')
+# add key include path.
 path = [cwd+'/inc']
 
 # add src and include to group.
-group = DefineGroup('button', src, depend = ['PKG_USING_BUTTON'], CPPPATH = path)
+group = DefineGroup('key', src, depend = ['PKG_USING_KEY'], CPPPATH = path)
 
 Return('group')

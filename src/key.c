@@ -1,4 +1,4 @@
-#include "button.h"
+#include "key.h"
 #include <string.h>
 
 //#ifdef PKG_USING_BUTTON

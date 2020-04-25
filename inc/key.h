@@ -1,5 +1,5 @@
-#ifndef __BUTTON_H__
-#define __BUTTON_H__
+#ifndef __KEY_H__
+#define __KEY_H__
 
 #include <rtthread.h>
 #include <rtdevice.h>
