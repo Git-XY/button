@@ -1,69 +1,69 @@
 #include "key.h"
 #include <string.h>
 
-//#ifdef PKG_USING_BUTTON
+//#ifdef PKG_USING_KEY
 /*******************************************************************
  *                          Variable Declaration
  *******************************************************************/
 
-static struct button* head_button = RT_NULL;
+static struct key* head_key = RT_NULL;
 
 
 /*******************************************************************
  *                         Function Declaration
  *******************************************************************/
 static char *StrnCopy(char *dst, const char *src, rt_uint32_t n);
-static void add_button(button_t* btn);
-static void button_cycle_process(button_t *btn);
+static void add_key(key_t* btn);
+static void key_cycle_process(key_t *btn);
 
-void button_create(
-    const char *name,button_t *btn,
+void key_create(
+    const char *name,key_t *btn,
     rt_uint8_t(*read_btn_level)(void),
     rt_uint8_t btn_trigger_level)
 {
     if( btn == RT_NULL)
-        RT_DEBUG_LOG(RT_DEBUG_THREAD,("struct button is RT_NULL!"));
+        RT_DEBUG_LOG(RT_DEBUG_THREAD,("struct key is RT_NULL!"));
 
-    memset(btn, 0, sizeof(struct button));      //Clear structure information
+    memset(btn, 0, sizeof(struct key));      //Clear structure information
 
-    StrnCopy(btn->name, name, BUTTON_NAME_MAX);    //button name
+    StrnCopy(btn->name, name, KEY_NAME_MAX);    //key name
 
 
-    btn->button_state         = NONE_TRIGGER;                     //Button status
-    btn->button_last_state    = NONE_TRIGGER;                //Button last status
-    btn->button_trigger_event = NONE_TRIGGER;             //Button trigger event
-    btn->read_button_level    = read_btn_level;              //Button trigger level reading function
-    btn->button_trigger_level = btn_trigger_level;        //Button trigger level
-    btn->button_last_level    = btn->read_button_level();    //Button current level
+    btn->key_state         = NONE_TRIGGER;                     //key status
+    btn->key_last_state    = NONE_TRIGGER;                //key last status
+    btn->key_trigger_event = NONE_TRIGGER;             //key trigger event
+    btn->read_key_level    = read_btn_level;              //key trigger level reading function
+    btn->key_trigger_level = btn_trigger_level;        //key trigger level
+    btn->key_last_level    = btn->read_key_level();    //key current level
     btn->debounce_time        = 0;
 
-    //RT_DEBUG_LOG(RT_DEBUG_THREAD,("button create success!"));
-    add_button(btn);          //Added to the singly linked list when button created
+    //RT_DEBUG_LOG(RT_DEBUG_THREAD,("key create success!"));
+    add_key(btn);          //Added to the singly linked list when key created
 	
-    //print_button_info(btn);
+    //print_key_info(btn);
 }
 
-void button_attach(button_t *btn,Button_Event btn_event,button_callBack btn_callback)
+void key_attach(key_t *btn,Key_Event btn_event,key_callback btn_callback)
 {
     if( btn == RT_NULL)
-        RT_DEBUG_LOG(RT_DEBUG_THREAD,("struct button is RT_NULL!"));
+        RT_DEBUG_LOG(RT_DEBUG_THREAD,("struct key is RT_NULL!"));
 
-    if(BUTTON_ALL_RIGGER == btn_event)
+    if(KEY_ALL_RIGGER == btn_event)
     {
         for(rt_uint8_t i = 0 ; i < number_of_event-1 ; i++)
-            btn->callback_function[i] = btn_callback; //A callback function triggered by a button event ,Used to handle button events
+            btn->callback_function[i] = btn_callback; //A callback function triggered by a key event ,Used to handle key events
     }
     else
         btn->callback_function[btn_event] = btn_callback;
 }
 
 
-void button_delete(button_t *btn)
+void key_delete(key_t *btn)
 {
-    struct button** curr;
-    for(curr = &head_button; *curr;)
+    struct key** curr;
+    for(curr = &head_key; *curr;)
     {
-        struct button* entry = *curr;
+        struct key* entry = *curr;
         if (entry == btn)
             *curr = entry->next;
         else
@@ -71,113 +71,101 @@ void button_delete(button_t *btn)
     }
 }
 
-void button_process(void)
+void key_process(void)
 {
-    struct button* pass_button;
-    for(pass_button = head_button; pass_button != RT_NULL; pass_button = pass_button->next)
+    struct key* pass_key;
+    for(pass_key = head_key; pass_key != RT_NULL; pass_key = pass_key->next)
     {
-        button_cycle_process(pass_button);
+        key_cycle_process(pass_key);
     }
 }
 
-rt_uint8_t get_button_state(button_t *btn)
+rt_uint8_t get_key_state(key_t *btn)
 {
-    return (rt_uint8_t)(btn->button_state);
+    return (rt_uint8_t)(btn->key_state);
 }
 
-rt_uint8_t get_button_event(button_t *btn)
+rt_uint8_t get_key_event(key_t *btn)
 {
-  return (rt_uint8_t)(btn->button_trigger_event);
+  return (rt_uint8_t)(btn->key_trigger_event);
 }
 
-void button_process_callback(void *btn)
+void key_process_callback(void *btn)
 {
-  rt_uint8_t btn_event = get_button_event(btn);
+  rt_uint8_t btn_event = get_key_event(btn);
 
   switch(btn_event)
   {
-    case BUTTON_DOWM:
+    case KEY_DOWM:
     {
       RT_DEBUG_LOG(RT_DEBUG_THREAD,("Add processing logic for your press trigger"));
       break;
     }
 
-    case BUTTON_UP:
+    case KEY_UP:
     {
       RT_DEBUG_LOG(RT_DEBUG_THREAD,("Add processing logic for your trigger release"));
       break;
     }
 
-    case BUTTON_DOUBLE:
+    case KEY_DOUBLE:
     {
       RT_DEBUG_LOG(RT_DEBUG_THREAD,("Add processing logic for your double-click trigger"));
       break;
     }
 
-    case BUTTON_LONG:
+    case KEY_LONG:
     {
       RT_DEBUG_LOG(RT_DEBUG_THREAD,("Add processing logic for your long press trigger"));
       break;
     }
 
-    case BUTTON_LONG_FREE:
+    case KEY_LONG_FREE:
     {
       RT_DEBUG_LOG(RT_DEBUG_THREAD,("Add processing logic for your long press trigger free"));
       break;
     }
-
-    case BUTTON_CONTINUOS:
-    {
-      RT_DEBUG_LOG(RT_DEBUG_THREAD,("Add your continuous trigger processing logic"));
-      break;
-    }
-
-    case BUTTON_CONTINUOS_FREE:
-    {
-      RT_DEBUG_LOG(RT_DEBUG_THREAD,("Add processing logic for your continuous trigger release"));
-      break;
-    }
   }
 }
 
 
-void search_button(void)
+void search_key(void)
 {
-  struct button* pass_button;
-  for(pass_button = head_button; pass_button != RT_NULL; pass_button = pass_button->next)
+  struct key* pass_key;
+  for(pass_key = head_key; pass_key != RT_NULL; pass_key = pass_key->next)
   {
-    RT_DEBUG_LOG(RT_DEBUG_THREAD,("button node have %s",pass_button->name));
+    RT_DEBUG_LOG(RT_DEBUG_THREAD,("key node have %s",pass_key->name));
   }
 }
 
 
-void get_button_eventlnfo(button_t *btn)
+void get_key_eventlnfo(key_t *btn)
 {
   for(rt_uint8_t i = 0 ; i < number_of_event-1 ; i++)
   {
     if(btn->callback_function[i] != 0)
     {
-      RT_DEBUG_LOG(RT_DEBUG_THREAD,("Button_Event:%d",i));
+      RT_DEBUG_LOG(RT_DEBUG_THREAD,("Key_Event:%d",i));
     }
   }
 }
 
 
-void print_button_info(button_t* btn)
+void print_key_info(key_t* btn)
 {
-  RT_DEBUG_LOG(RT_DEBUG_THREAD,("button struct information:\n\
+  RT_DEBUG_LOG(RT_DEBUG_THREAD,("key struct information:\n\
               btn->Name:%s \n\
-              btn->Button_State:%d \n\
-              btn->Button_Trigger_Event:%d \n\
-              btn->Button_Trigger_Level:%d \n\
-              btn->Button_Last_Level:%d \n\
+              btn->key_State:%d \n\
+              btn->key_trigger_Event:%d \n\
+              btn->key_trigger_Level:%d \n\
+              btn->key_Last_Level:%d \n\
               ",
               btn->name,
-              btn->button_state,
-              btn->button_trigger_event,
-              btn->button_trigger_level,
-              btn->button_last_level));
-  search_button();
+              btn->key_state,
+              btn->key_trigger_event,
+              btn->key_trigger_level,
+              btn->key_last_level));
+  search_key();
 }
 
 /**************************** The following is the internal call function ********************/
@@ -202,101 +190,87 @@ static char *StrnCopy(char *dst, const char *src, rt_uint32_t n)
 }
 
 
-static void add_button(button_t* btn)
+static void add_key(key_t* btn)
 {
-    struct button *pass_button = head_button;
+    struct key *pass_key = head_key;
 
-    while(pass_button)
+    while(pass_key)
     {
-        pass_button = pass_button->next;
+        pass_key = pass_key->next;
     }
 
-    btn->next   = head_button;
-    head_button = btn;
+    btn->next   = head_key;
+    head_key = btn;
 }
 
 
-static void button_cycle_process(button_t *btn)
+static void key_cycle_process(key_t *btn)
 {
-    rt_uint8_t current_level = (rt_uint8_t)btn->read_button_level();  
+    rt_uint8_t current_level = (rt_uint8_t)btn->read_key_level();  
 
-    if((current_level != btn->button_last_level)&&(++(btn->debounce_time) >= BUTTON_debounce_time))   
+    if((current_level != btn->key_last_level)&&(++(btn->debounce_time) >= KEY_DEBOUNCE_TIME))   
     {
-        btn->button_last_level = current_level;     //Update current button level
-        btn->debounce_time     = 0;                 //button is pressed
+        btn->key_last_level = current_level;     //Update current key level
+        btn->debounce_time     = 0;                 //key is pressed
 
     
-        if((btn->button_state == NONE_TRIGGER)||(btn->button_state == BUTTON_DOUBLE))
+        if((btn->key_state == NONE_TRIGGER)||(btn->key_state == KEY_DOUBLE))
         {
-            btn->button_state = BUTTON_DOWM;
+            btn->key_state = KEY_DOWM;
         }
-        else if(btn->button_state == BUTTON_DOWM)
+        else if(btn->key_state == KEY_DOWM)
         {
-            btn->button_state = BUTTON_UP;
-            RT_DEBUG_LOG(RT_DEBUG_THREAD,("button release"));
+            btn->key_state = KEY_UP;
+            RT_DEBUG_LOG(RT_DEBUG_THREAD,("key release"));
         }
     }
 
-    switch(btn->button_state)
+    switch(btn->key_state)
     {
-    case BUTTON_DOWM :                                        // button dowm
+    case KEY_DOWM :                                        // key dowm
     {
-        if(btn->button_last_level == btn->button_trigger_level)
+        if(btn->key_last_level == btn->key_trigger_level)
         {
-#ifdef CONTINUOS_TRIGGER                              //Support continuous triggering
+            btn->key_trigger_event = KEY_DOWM;
 
-            if(++(btn->button_cycle) >= BUTTON_CONTINUOS_CYCLE)
-            {
-                btn->button_cycle = 0;
-                btn->button_trigger_event = BUTTON_CONTINUOS;
-                TRIGGER_CB(BUTTON_CONTINUOS);                      //continuous triggering
-                RT_DEBUG_LOG(RT_DEBUG_THREAD,("continuous triggering"));
-            }
-
-#else
-
-            btn->button_trigger_event = BUTTON_DOWM;
-
-            if(++(btn->long_time) >= BUTTON_long_time)            //Update the trigger event before releasing the button as long press
+            if(++(btn->long_time) >= KEY_LONG_TIME)            //Update the trigger event before releasing the key as long press
             {
 #ifdef LONG_FREE_TRIGGER
 
-                btn->button_trigger_event = BUTTON_LONG;
+                btn->key_trigger_event = KEY_LONG;
 
 #else
 
-                if(++(btn->button_cycle) >= BUTTON_LONG_CYCLE)      //Continuous triggering of long press cycles
+                if(++(btn->key_cycle) >= KEY_LONG_CYCLE)      //Continuous triggering of long press cycles
                 {
-                    btn->button_cycle = 0;
-                    btn->button_trigger_event = BUTTON_LONG;
-                    TRIGGER_CB(BUTTON_LONG);    //long triggering
+                    btn->key_cycle = 0;
+                    btn->key_trigger_event = KEY_LONG;
+                    TRIGGER_CB(KEY_LONG);    //long triggering
                 }
 #endif
 
                 if(btn->long_time == 0xFF)    //Update time overflow
                 {
-                    btn->long_time = BUTTON_long_time;
+                    btn->long_time = KEY_LONG_TIME;
                 }
                 RT_DEBUG_LOG(RT_DEBUG_THREAD,("Long press"));
             }
-
-#endif
         }
 
         break;
     }
 
-    case BUTTON_UP :                                        //button up
+    case KEY_UP :                                        //key up
     {
-        if(btn->button_trigger_event == BUTTON_DOWM)          //Trigger click
+        if(btn->key_trigger_event == KEY_DOWM)          //Trigger click
         {
-            if((btn->timer_count <= BUTTON_DOUBLE_TIME)&&(btn->button_last_state == BUTTON_DOUBLE)) // double click
+            if((btn->timer_count <= KEY_DOUBLE_TIME)&&(btn->key_last_state == KEY_DOUBLE)) // double click
             {
-                btn->button_trigger_event = BUTTON_DOUBLE;
-                TRIGGER_CB(BUTTON_DOUBLE);
+                btn->key_trigger_event = KEY_DOUBLE;
+                TRIGGER_CB(KEY_DOUBLE);
                 RT_DEBUG_LOG(RT_DEBUG_THREAD,("double click"));
-                btn->button_state = NONE_TRIGGER;
-                btn->button_last_state = NONE_TRIGGER;
+                btn->key_state = NONE_TRIGGER;
+                btn->key_last_state = NONE_TRIGGER;
             }
             else
             {
@@ -304,55 +278,44 @@ static void button_cycle_process(button_t *btn)
                 btn->long_time = 0;                   //Detection long press failed, clear 0
 
 #ifndef SINGLE_AND_DOUBLE_TRIGGER
-                TRIGGER_CB(BUTTON_DOWM);              //click
+                TRIGGER_CB(KEY_DOWM);              //click
 #endif
-                btn->button_state = BUTTON_DOUBLE;
-                btn->button_last_state = BUTTON_DOUBLE;
+                btn->key_state = KEY_DOUBLE;
+                btn->key_last_state = KEY_DOUBLE;
 
             }
         }
 
-        else if(btn->button_trigger_event == BUTTON_LONG)
+        else if(btn->key_trigger_event == KEY_LONG)
         {
 #ifdef LONG_FREE_TRIGGER
-            TRIGGER_CB(BUTTON_LONG);                    //Long press
+            TRIGGER_CB(KEY_LONG);                    //Long press
 #else
-            TRIGGER_CB(BUTTON_LONG_FREE);               //Long press free
+            TRIGGER_CB(KEY_LONG_FREE);               //Long press free
 #endif
             btn->long_time = 0;
-            btn->button_state = NONE_TRIGGER;
-            btn->button_last_state = BUTTON_LONG;
+            btn->key_state = NONE_TRIGGER;
+            btn->key_last_state = KEY_LONG;
         }
-
-#ifdef CONTINUOS_TRIGGER
-        else if(btn->button_trigger_event == BUTTON_CONTINUOS)  //Press continuously
-        {
-            btn->long_time = 0;
-            TRIGGER_CB(BUTTON_CONTINUOS_FREE);                    //Press continuously free
-            btn->button_state = NONE_TRIGGER;
-            btn->button_last_state = BUTTON_CONTINUOS;
-        }
-#endif
-
         break;
     }
 
-    case BUTTON_DOUBLE :
+    case KEY_DOUBLE :
     {
         btn->timer_count++;                                       //Update time
-        if(btn->timer_count>=BUTTON_DOUBLE_TIME)
+        if(btn->timer_count>=KEY_DOUBLE_TIME)
         {
-            btn->button_state = NONE_TRIGGER;
-            btn->button_last_state = NONE_TRIGGER;
+            btn->key_state = NONE_TRIGGER;
+            btn->key_last_state = NONE_TRIGGER;
         }
 #ifdef SINGLE_AND_DOUBLE_TRIGGER
 
-        if((btn->timer_count>=BUTTON_DOUBLE_TIME)&&(btn->button_last_state != BUTTON_DOWM))
+        if((btn->timer_count>=KEY_DOUBLE_TIME)&&(btn->key_last_state != KEY_DOWM))
         {
             btn->timer_count=0;
-            TRIGGER_CB(BUTTON_DOWM);
-            btn->button_state = NONE_TRIGGER;
-            btn->button_last_state = BUTTON_DOWM;
+            TRIGGER_CB(KEY_DOWM);
+            btn->key_state = NONE_TRIGGER;
+            btn->key_last_state = KEY_DOWM;
         }
 
 #endif
