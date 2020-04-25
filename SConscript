@@ -1,6 +1,6 @@
-Import('rtconfig')
 from building import *
-
+Import('rtconfig')
+src     = []
 cwd     = GetCurrentDir()
 
 # add key src files.
