@@ -12,6 +12,6 @@ if GetDepend('PKG_USING_KEY_SAMPLE'):
 path = [cwd+'/inc']
 
 # add src and include to group.
-group = DefineGroup('key', src, depend = ['PKG_USING_KEY'], CPPPATH = path)
+group = DefineGroup('Key', src, depend = ['PKG_USING_KEY'], CPPPATH = path)
 
 Return('group')
