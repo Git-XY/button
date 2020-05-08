@@ -1,7 +1,7 @@
 #include "key.h"
 #include <string.h>
 
-//#ifdef PKG_USING_KEY
+#if defined(PKG_USING_KEY)||defined(RT_DEBUG_KEY)
 /*******************************************************************
  *                          Variable Declaration
  *******************************************************************/
@@ -22,7 +22,8 @@ void key_create(
     rt_uint8_t btn_trigger_level)
 {
     if( btn == RT_NULL)
-        RT_DEBUG_LOG(RT_DEBUG_THREAD,("struct key is RT_NULL!"));
+		return ;
+        //RT_DEBUG_LOG(RT_DEBUG_THREAD,("struct key is RT_NULL!"));
 
     memset(btn, 0, sizeof(struct key));      //Clear structure information
 
@@ -37,7 +38,7 @@ void key_create(
     btn->key_last_level    = btn->read_key_level();    //key current level
     btn->debounce_time        = 0;
 
-    //RT_DEBUG_LOG(RT_DEBUG_THREAD,("key create success!"));
+    ////RT_DEBUG_LOG(RT_DEBUG_THREAD,("key create success!"));
     add_key(btn);          //Added to the singly linked list when key created
 	
     //print_key_info(btn);
@@ -46,7 +47,8 @@ void key_create(
 void key_attach(key_t *btn,Key_Event btn_event,key_callback btn_callback)
 {
     if( btn == RT_NULL)
-        RT_DEBUG_LOG(RT_DEBUG_THREAD,("struct key is RT_NULL!"));
+		return ;
+        //RT_DEBUG_LOG(RT_DEBUG_THREAD,("struct key is RT_NULL!"));
 
     if(KEY_ALL_RIGGER == btn_event)
     {
@@ -90,6 +92,8 @@ rt_uint8_t get_key_event(key_t *btn)
   return (rt_uint8_t)(btn->key_trigger_event);
 }
 
+#if defined(RT_USING_KEY_PRINT)
+
 void key_process_callback(void *btn)
 {
   rt_uint8_t btn_event = get_key_event(btn);
@@ -98,31 +102,31 @@ void key_process_callback(void *btn)
   {
     case KEY_DOWM:
     {
-      RT_DEBUG_LOG(RT_DEBUG_THREAD,("Add processing logic for your press trigger"));
+      //RT_DEBUG_LOG(RT_DEBUG_THREAD,("Add processing logic for your press trigger"));
       break;
     }
 
     case KEY_UP:
     {
-      RT_DEBUG_LOG(RT_DEBUG_THREAD,("Add processing logic for your trigger release"));
+      //RT_DEBUG_LOG(RT_DEBUG_THREAD,("Add processing logic for your trigger release"));
       break;
     }
 
     case KEY_DOUBLE:
     {
-      RT_DEBUG_LOG(RT_DEBUG_THREAD,("Add processing logic for your double-click trigger"));
+      //RT_DEBUG_LOG(RT_DEBUG_THREAD,("Add processing logic for your double-click trigger"));
       break;
     }
 
     case KEY_LONG:
     {
-      RT_DEBUG_LOG(RT_DEBUG_THREAD,("Add processing logic for your long press trigger"));
+      //RT_DEBUG_LOG(RT_DEBUG_THREAD,("Add processing logic for your long press trigger"));
       break;
     }
 
     case KEY_LONG_FREE:
     {
-      RT_DEBUG_LOG(RT_DEBUG_THREAD,("Add processing logic for your long press trigger free"));
+      //RT_DEBUG_LOG(RT_DEBUG_THREAD,("Add processing logic for your long press trigger free"));
       break;
     }
   }
@@ -167,7 +171,7 @@ void print_key_info(key_t* btn)
               btn->key_last_level));
   search_key();
 }
-
+#endif
 /**************************** The following is the internal call function ********************/
 
 static char *StrnCopy(char *dst, const char *src, rt_uint32_t n)
@@ -210,8 +214,8 @@ static void key_cycle_process(key_t *btn)
 
     if((current_level != btn->key_last_level)&&(++(btn->debounce_time) >= KEY_DEBOUNCE_TIME))   
     {
-        btn->key_last_level = current_level;     //Update current key level
-        btn->debounce_time     = 0;                 //key is pressed
+        btn->key_last_level    = current_level;    
+        btn->debounce_time     = 0;                
 
     
         if((btn->key_state == NONE_TRIGGER)||(btn->key_state == KEY_DOUBLE))
@@ -221,7 +225,7 @@ static void key_cycle_process(key_t *btn)
         else if(btn->key_state == KEY_DOWM)
         {
             btn->key_state = KEY_UP;
-            RT_DEBUG_LOG(RT_DEBUG_THREAD,("key release"));
+            //RT_DEBUG_LOG(RT_DEBUG_THREAD,("key release"));
         }
     }
 
@@ -235,7 +239,7 @@ static void key_cycle_process(key_t *btn)
 
             if(++(btn->long_time) >= KEY_LONG_TIME)            //Update the trigger event before releasing the key as long press
             {
-#ifdef LONG_FREE_TRIGGER
+#if defined( LONG_FREE_TRIGGER)
 
                 btn->key_trigger_event = KEY_LONG;
 
@@ -253,7 +257,7 @@ static void key_cycle_process(key_t *btn)
                 {
                     btn->long_time = KEY_LONG_TIME;
                 }
-                RT_DEBUG_LOG(RT_DEBUG_THREAD,("Long press"));
+                //RT_DEBUG_LOG(RT_DEBUG_THREAD,("Long press"));
             }
         }
 
@@ -268,7 +272,7 @@ static void key_cycle_process(key_t *btn)
             {
                 btn->key_trigger_event = KEY_DOUBLE;
                 TRIGGER_CB(KEY_DOUBLE);
-                RT_DEBUG_LOG(RT_DEBUG_THREAD,("double click"));
+                //RT_DEBUG_LOG(RT_DEBUG_THREAD,("double click"));
                 btn->key_state = NONE_TRIGGER;
                 btn->key_last_state = NONE_TRIGGER;
             }
@@ -288,7 +292,7 @@ static void key_cycle_process(key_t *btn)
 
         else if(btn->key_trigger_event == KEY_LONG)
         {
-#ifdef LONG_FREE_TRIGGER
+#if defined( LONG_FREE_TRIGGER)
             TRIGGER_CB(KEY_LONG);                    //Long press
 #else
             TRIGGER_CB(KEY_LONG_FREE);               //Long press free
@@ -308,7 +312,7 @@ static void key_cycle_process(key_t *btn)
             btn->key_state = NONE_TRIGGER;
             btn->key_last_state = NONE_TRIGGER;
         }
-#ifdef SINGLE_AND_DOUBLE_TRIGGER
+#if defined( SINGLE_AND_DOUBLE_TRIGGER)
 
         if((btn->timer_count>=KEY_DOUBLE_TIME)&&(btn->key_last_state != KEY_DOWM))
         {
@@ -329,4 +333,4 @@ static void key_cycle_process(key_t *btn)
 
 }
 
-//#endif
+#endif

@@ -2,11 +2,9 @@
 #define __KEY_H__
 
 #include <rtthread.h>
-#include <rtdevice.h>
 
 #define KEY_NAME_MAX          16     //名字最大为16字节
-
-         
+        
 #ifndef KEY_DEBOUNCE_TIME
 #define KEY_DEBOUNCE_TIME     2   //Debounce time  (n-1)*call cycle
 #endif
@@ -91,6 +89,7 @@ rt_uint8_t get_key_event(key_t *btn);
 
 rt_uint8_t get_key_state(key_t *btn);
 
+#if defined(RT_USING_KEY_PRINT)
 void key_process_callback(void *btn);
  
 void search_key(void);    
@@ -98,6 +97,7 @@ void search_key(void);
 void get_key_eventlnfo(key_t *btn);
 
 void print_key_info(key_t* btn);   
+#endif
 
 #endif
 
